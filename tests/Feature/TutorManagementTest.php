@@ -1,6 +1,11 @@
 <?php
 
 use App\Models\User;
+use Illuminate\Support\Facades\Artisan;
+
+beforeEach(function () {
+    Artisan::call('migrate');
+});
 
 test('guest cannot access tutor management page', function () {
     $response = $this->get('/admin/tutor');
@@ -66,4 +71,38 @@ test('validation succeeds and redirects when submitting valid tutor form', funct
 
     $response->assertRedirect('/admin/tutor');
     $response->assertSessionHas('success');
+});
+
+test('newly created tutor can login with email and temporary password to tutor portal', function () {
+    $admin = User::factory()->make(['id' => 1, 'name' => 'Admin', 'username' => 'admin', 'email' => 'admin@raccer.com']);
+
+    $tutorEmail = 'budi.baru@racer.id';
+    $tempPassword = 'PasswordTutorBaru2026!';
+
+    // Buat tutor baru via admin
+    $createResponse = $this->actingAs($admin)->post('/admin/tutor', [
+        'nama_gelar' => 'Budi Baru, S.Kom.',
+        'whatsapp' => '081299887766',
+        'email' => $tutorEmail,
+        'tautan_meeting' => 'https://meet.google.com/budi-baru',
+        'jenjang_modul' => 'Level 1: Building (TK/SD)',
+        'penempatan' => 'Lab A - Jakarta Pusat',
+        'max_kelas_minggu' => '10 Sesi',
+        'preferensi_mengajar' => 'Sabtu & Minggu',
+        'kata_sandi_sementara' => $tempPassword,
+    ]);
+    $createResponse->assertRedirect('/admin/tutor');
+
+    // Logout admin
+    auth()->logout();
+
+    // Login sebagai tutor baru menggunakan email
+    $loginResponse = $this->post('/login', [
+        'username' => $tutorEmail,
+        'password' => $tempPassword,
+    ]);
+
+    $loginResponse->assertRedirect(route('tutor'));
+    expect(auth()->check())->toBeTrue();
+    expect(session('role'))->toBe('Tutor');
 });

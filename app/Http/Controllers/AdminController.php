@@ -2739,8 +2739,8 @@ class AdminController extends Controller
 
             // Buat akun pengguna jika tabel pengguna ada untuk memenuhi foreign key
             $idPengguna = null;
+            $username = $baseUsername;
             if (Schema::hasTable('pengguna')) {
-                $username = $baseUsername;
                 $counter = 1;
                 while (DB::table('pengguna')->where('username', $username)->exists()) {
                     $username = $baseUsername . $counter;
@@ -2769,7 +2769,7 @@ class AdminController extends Controller
                 'nomor_whatsapp' => $validated['whatsapp'],
                 'whatsapp' => $validated['whatsapp'],
                 'email' => $validated['email'],
-                'username' => '@' . $baseUsername,
+                'username' => '@' . $username,
                 'spesialisasi' => str_contains($validated['jenjang_modul'], 'TK') ? 'TK' : 'SD',
                 'jenjang_modul' => $validated['jenjang_modul'],
                 'penempatan' => $validated['penempatan'],
@@ -2780,7 +2780,7 @@ class AdminController extends Controller
                 'dibuat_pada' => now(),
             ]);
 
-            return redirect()->route('admin.tutor')->with('success', "Akun Tutor {$validated['nama_gelar']} ({$kodeTutor}) berhasil didaftarkan!");
+            return redirect()->route('admin.tutor')->with('success', "Akun Tutor {$validated['nama_gelar']} ({$kodeTutor}) berhasil didaftarkan! Gunakan Username: @{$username} atau Email: {$validated['email']} untuk login.");
         } catch (\Throwable $e) {
             return redirect()->route('admin.tutor')->with('success', "Akun Tutor {$validated['nama_gelar']} berhasil dibuat!");
         }
